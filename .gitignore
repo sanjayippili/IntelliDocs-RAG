@@ -1,0 +1,12 @@
+.env
+venv/
+.venv/
+
+__pycache__/
+*.pyc
+
+chroma_db/
+data/uploads/
+
+.ipynb_checkpoints/
+.streamlit/secrets.toml
