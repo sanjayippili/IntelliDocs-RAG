@@ -15,6 +15,6 @@ embedding_model = GoogleGenerativeAIEmbeddings(
 
 # Gemini LLM
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.6-flash",
+    model="gemini-flash-latest-lite",
     google_api_key=GOOGLE_API_KEY,
 )

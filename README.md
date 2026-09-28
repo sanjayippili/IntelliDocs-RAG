@@ -28,7 +28,7 @@ This repository is a practical RAG demonstration. It is not a hardened multi-use
 - Generate embeddings with Google's `gemini-embedding-001` model.
 - Store and search vectors in a persistent local ChromaDB collection.
 - Retrieve the five most similar chunks for a question.
-- Generate context-based answers with Google's `gemini-3.6-flash` model.
+- Generate context-based answers with Google's `gemini-flash-latest-lite` model.
 - Display source filenames for the retrieved content.
 - Delete an individual document or confirm deletion of all documents.
 - Clear the current chat history.
@@ -192,7 +192,7 @@ The defaults are defined in [`app/utils/config.py`](app/utils/config.py) and [`a
 | Setting | Default |
 | --- | --- |
 | Embedding model | `gemini-embedding-001` |
-| Chat model | `gemini-3.6-flash` |
+| Chat model | `gemini-flash-latest-lite` |
 | Chunk size | `500` characters |
 | Chunk overlap | `50` characters |
 | Retrieved chunks (`TOP_K`) | `5` |
