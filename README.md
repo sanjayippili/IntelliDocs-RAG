@@ -1,603 +1,240 @@
-# LangChain RAG Production Application
+# LangChain RAG Document Assistant
 
-A production-style Retrieval-Augmented Generation (RAG) application built using LangChain, Gemini, ChromaDB, and Streamlit.
+A Streamlit application for asking questions about uploaded documents. It loads documents, splits their content into chunks, embeds those chunks with Google Gemini, stores them in a local ChromaDB collection, retrieves relevant chunks for each question, and asks Gemini to answer using the retrieved context.
 
-This application allows users to dynamically upload their own documents and ask questions about the uploaded content. The system loads the documents, splits them into smaller chunks, converts the chunks into vector embeddings using Gemini, stores the embeddings in ChromaDB, retrieves relevant chunks based on the user's question, and uses a Gemini language model to generate an answer from the retrieved context.
+This repository is a practical RAG demonstration. It is not a hardened multi-user production service: it has no authentication, authorization, tenant isolation, or deployment-specific secret management.
 
-## Project Overview
+## Contents
 
-The application follows this RAG pipeline:
-
-User Uploads Documents
-↓
-Document Loading
-↓
-Document Chunking
-↓
-Gemini Embeddings
-↓
-ChromaDB
-↓
-Similarity Search
-↓
-Relevant Document Chunks
-↓
-Gemini LLM
-↓
-Generated Answer
-
-The application supports dynamic document uploading, document deletion, source tracking, chat history, and question answering through a Streamlit interface.
+- [Features](#features)
+- [How It Works](#how-it-works)
+- [Technology Stack](#technology-stack)
+- [Supported Documents](#supported-documents)
+- [Project Layout](#project-layout)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Run the Application](#run-the-application)
+- [Using the Application](#using-the-application)
+- [Configuration Defaults](#configuration-defaults)
+- [Data, Persistence, and Privacy](#data-persistence-and-privacy)
+- [Troubleshooting](#troubleshooting)
+- [Current Limitations](#current-limitations)
 
 ## Features
 
-* Dynamic document uploading
-* Multiple document upload
-* PDF support
-* DOCX support
-* TXT support
-* CSV support
-* JSON support
-* Document chunking
-* Gemini embeddings
-* ChromaDB vector database
-* Similarity-based document retrieval
-* Gemini LLM for answer generation
-* Context-based question answering
-* Source filename display
-* Individual document deletion
-* Delete all documents
-* Delete all confirmation
-* Chat history
-* Clear chat functionality
-* Dynamic ChromaDB creation
-* Gemini API error handling
-* Streamlit user interface
-
-## Technologies Used
-
-Python - Programming language
-
-LangChain - RAG framework
-
-Gemini - Embeddings and Large Language Model
-
-ChromaDB - Vector database
-
-Streamlit - Web application interface
-
-PyPDF - PDF document loading
-
-Docx2txt - DOCX document loading
-
-Pandas - CSV/data processing
-
-Python-dotenv - Environment variable management
-
-## Supported File Formats
-
-The application currently supports:
-
-PDF
-DOCX
-TXT
-CSV
-JSON
-
-Users can upload multiple documents through the Streamlit interface.
-
-## Project Structure
-
-LangChain-RAG-Production/
-
-├── app/
-
-│   ├── loaders/
-
-│   │   ├── pdf_loader.py
-
-│   │   ├── docx_loader.py
-
-│   │   ├── txt_loader.py
-
-│   │   ├── csv_loader.py
-
-│   │   ├── json_loader.py
-
-│   │   └── document_loader.py
-
-│   │
-
-│   ├── rag/
-
-│   │   ├── splitter.py
-
-│   │   ├── embeddings.py
-
-│   │   ├── vectorstore.py
-
-│   │   ├── retriever.py
-
-│   │   └── generator.py
-
-│   │
-
-│   └── utils/
-
-│       └── config.py
-
-│
-
-├── data/
-
-│   └── uploads/
-
-│
-
-├── chroma_db/
-
-├── streamlit_app.py
-
-├── requirements.txt
-
-├── .env
-
-├── .env.example
-
-├── .gitignore
-
-└── README.md
-
-The `chroma_db/` and `data/uploads/` directories are used locally and should not be committed to GitHub.
-
-## RAG Pipeline
-
-### 1. Document Upload
-
-The user uploads one or more documents through the Streamlit interface.
-
-For example:
-
-document.pdf
-company_policy.docx
-notes.txt
-employees.csv
-data.json
-
-Uploaded files are stored locally in:
-
-data/uploads/
-
-### 2. Document Loading
-
-The application identifies the uploaded file extension and selects the appropriate document loader.
-
-PDF → PyPDFLoader
-
-DOCX → Docx2txtLoader
-
-TXT → TextLoader
-
-CSV → CSVLoader
-
-JSON → Custom JSON Loader
-
-The common document loader handles the file type detection and calls the appropriate loader.
-
-### 3. Document Chunking
-
-Large documents are divided into smaller chunks before generating embeddings.
-
-Current configuration:
-
-Chunk Size = 500
-
-Chunk Overlap = 50
-
-The project uses `RecursiveCharacterTextSplitter`.
-
-Chunk overlap helps preserve some context between neighboring chunks.
-
-### 4. Gemini Embeddings
-
-Each document chunk is converted into a numerical vector using the Gemini embedding model.
-
-Embedding model:
-
-gemini-embedding-001
-
-The generated vectors represent the semantic meaning of the document chunks.
-
-### 5. ChromaDB
-
-The generated embeddings are stored in ChromaDB.
-
-ChromaDB is used as the vector database for the application.
-
-Document Chunk
-↓
-Gemini Embedding
-↓
-Vector
-↓
-ChromaDB
-
-ChromaDB is created and updated locally when documents are processed.
-
-### 6. User Question
-
-The user asks a question through the Streamlit chat interface.
-
-For example:
-
-What is the case number?
-
-### 7. Similarity Retrieval
-
-The question is sent to ChromaDB.
-
-ChromaDB performs a similarity search and retrieves the document chunks that are most relevant to the question.
-
-Current configuration:
-
-TOP_K = 5
-
-### 8. Context Generation
-
-The retrieved document chunks are combined and passed as context to the Gemini language model.
-
-Retrieved Chunk 1
-Retrieved Chunk 2
-Retrieved Chunk 3
-...
-
-### 9. Gemini Answer Generation
-
-The retrieved context and user question are sent to the Gemini language model.
-
-The prompt instructs the model to:
-
-* Use only the provided context
-* Not use outside knowledge
-* Not make up information
-* Return a fallback response when the answer is not available in the documents
-
-Fallback response:
-
-"I don't have enough information in the provided documents."
-
-## Application Interface
-
-The application contains two main areas.
-
-### Sidebar
-
-The sidebar contains:
-
-Upload Documents
-
-Selected Documents
-
-Process Documents
-
-Current Documents
-
-Sources
-
-Delete All Documents
-
-The sidebar displays the filenames of the documents used to answer the current question.
-
-### Chat Area
-
-The main area contains:
-
-Chat
-
-Question
-
-Answer
-
-Users can ask multiple questions about their uploaded documents.
-
-The chat history is maintained during the session.
-
-## Document Management
-
-### Individual Document Delete
-
-Users can delete an individual uploaded document.
-
-The application removes the original document and its corresponding ChromaDB vectors.
-
-Other uploaded documents remain available.
-
-### Delete All Documents
-
-The application provides a Delete All Documents option with confirmation.
-
-After confirmation, the application removes all uploaded documents, their corresponding ChromaDB vectors, current sources, and chat history.
-
-## Source Tracking
-
-After a question is asked, the application identifies the source filenames from the retrieved document chunks.
-
-For example:
-
-Sources
-
-company_policy.pdf
-
-employee_handbook.docx
-
-Only the source documents used for the current question are displayed.
-
-Retrieved chunks themselves are not displayed in the UI.
-
-## Configuration
-
-The project uses an environment variable for the Gemini API key.
-
-Create a `.env` file in the project root.
-
-Add:
-
-GOOGLE_API_KEY=your_gemini_api_key
-
-The actual API key must never be committed to GitHub.
-
-## .env.example
-
-For GitHub, create a `.env.example` file containing:
-
-GOOGLE_API_KEY=your_gemini_api_key_here
-
-The `.env.example` file is only a template.
-
-Users should create their own `.env` file and add their own Gemini API key.
+- Upload one or more PDF, DOCX, TXT, CSV, and JSON files.
+- Split loaded content into overlapping text chunks.
+- Generate embeddings with Google's `gemini-embedding-001` model.
+- Store and search vectors in a persistent local ChromaDB collection.
+- Retrieve the five most similar chunks for a question.
+- Generate context-based answers with Google's `gemini-3.6-flash` model.
+- Display source filenames for the retrieved content.
+- Delete an individual document or confirm deletion of all documents.
+- Clear the current chat history.
+
+## How It Works
+
+```text
+Upload files
+    -> Load file contents
+    -> Split into chunks (500 characters, 50-character overlap)
+    -> Embed chunks with Gemini
+    -> Store chunks and vectors in ChromaDB
+
+Ask a question
+    -> Embed/search the question through ChromaDB
+    -> Retrieve up to five similar chunks
+    -> Send question and retrieved context to Gemini
+    -> Display the answer and source filenames
+```
+
+The answer prompt asks Gemini to use only the retrieved context and not invent information. If the answer is not found, the requested fallback is: `I don't have enough information in the provided documents.` This instruction helps guide the model but does not guarantee that every generated answer will be correct; check important answers against the source documents.
+
+## Technology Stack
+
+- Python
+- Streamlit
+- LangChain and LangChain integrations
+- Google Gemini embeddings and chat model
+- ChromaDB with a local persistent directory
+- PyPDF, docx2txt, and pandas-backed CSV loading
+- python-dotenv for loading `.env` configuration
+
+Dependencies are listed in [`requirements.txt`](requirements.txt). They are not version-pinned, so installed versions may change over time.
+
+## Supported Documents
+
+| Extension | Loader | Notes |
+| --- | --- | --- |
+| `.pdf` | `PyPDFLoader` | Extracts PDF page text. Scanned pages may require OCR, which is not configured here. |
+| `.docx` | `Docx2txtLoader` | Supports Word `.docx` files. |
+| `.txt` | `TextLoader` | Reads as UTF-8. |
+| `.csv` | `CSVLoader` | Loads CSV rows as documents. |
+| `.json` | Project JSON loader | A JSON list is represented as one document per item; other JSON values become one document. |
+
+The Streamlit file picker currently restricts uploads to these extensions. Legacy `.doc` files, spreadsheets, images, and OCR are not supported.
+
+## Project Layout
+
+```text
+.
+|-- app/
+|   |-- loaders/
+|   |   |-- csv_loader.py
+|   |   |-- document_loader.py
+|   |   |-- docx_loader.py
+|   |   |-- json_loader.py
+|   |   |-- pdf_loader.py
+|   |   `-- txt_loader.py
+|   |-- rag/
+|   |   |-- embeddings.py
+|   |   |-- generator.py
+|   |   |-- retriever.py
+|   |   |-- splitter.py
+|   |   `-- vectorstore.py
+|   `-- utils/
+|       `-- config.py
+|-- data/
+|   `-- uploads/       # Uploaded originals (created when needed)
+|-- chroma_db/         # Persistent local vector database
+|-- streamlit_app.py   # Streamlit interface and application flow
+|-- requirements.txt
+`-- README.md
+```
+
+## Requirements
+
+- Python 3.10 or newer is recommended.
+- A Google Gemini API key with access to the configured embedding and chat models.
+- Internet access when calling Gemini APIs.
 
 ## Installation
 
-### 1. Clone the Repository
+Run commands from the repository root.
 
-git clone YOUR_GITHUB_REPOSITORY_URL
+1. Clone the repository and change into its directory:
 
-Move into the project directory:
+   ```powershell
+   git clone <repository-url>
+   cd LangChain-RAG-Production
+   ```
 
-cd LangChain-RAG-Production
+   Replace `<repository-url>` with the URL of your Git repository.
 
-### 2. Create Virtual Environment
+2. Create and activate a virtual environment. In Windows PowerShell:
 
-On Windows:
+   ```powershell
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   ```
 
-python -m venv venv
+   On macOS or Linux:
 
-Activate the virtual environment:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
 
-.\venv\Scripts\Activate.ps1
+3. Install project dependencies:
 
-### 3. Install Dependencies
+   ```bash
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
 
-pip install -r requirements.txt
+4. Create a `.env` file in the repository root and add your Gemini API key as described below.
 
-### 4. Configure Gemini API Key
+## Configuration
 
-Create a `.env` file in the project root.
+The application reads `GOOGLE_API_KEY` from the environment. The included configuration calls `load_dotenv()`, which loads values from a root-level `.env` file.
 
-Add:
+Create `.env` in the project root:
 
+```dotenv
 GOOGLE_API_KEY=your_gemini_api_key
+```
+
+Use your own key; do not commit it or paste it into source code. The repository's `.gitignore` excludes `.env`, `chroma_db/`, and `data/uploads/`. If you publish or share the repository, keep those protections in place. For hosted deployment, configure the key using the hosting provider's secret-management mechanism rather than committing a secret file.
+
+The app raises an error during configuration if `GOOGLE_API_KEY` is missing.
 
 ## Run the Application
 
-Start the Streamlit application:
+With the virtual environment activated and `.env` configured, run:
 
+```bash
 streamlit run streamlit_app.py
+```
 
-The application will open in the browser.
+Streamlit prints a local URL in the terminal and usually opens it in your browser. Stop the server with `Ctrl+C` in the terminal.
 
-## How to Use
+## Using the Application
 
-### Step 1
+1. Use the sidebar file picker to select one or more supported files.
+2. Select **Process Documents**. The app saves each original under `data/uploads/`, loads and chunks its content, and adds the chunks to ChromaDB. Wait for the success message before asking questions.
+3. Enter a question in the chat box. The app searches the stored chunks, sends the question and retrieved content to Gemini, then displays the answer and source filenames in the sidebar.
+4. Ask more questions during the session. Use **Clear Chat** to clear the displayed conversation and current source list; it does not delete indexed documents.
+5. Use an individual **Delete** button to remove that file and its matching vectors. **Delete All Documents** asks for confirmation before clearing uploaded files, vector records, the session document list, sources, and chat.
 
-Open the application.
+Example questions:
 
-### Step 2
+- `What are the main requirements in this policy?`
+- `Which dates are mentioned in the report?`
+- `Summarize the CSV records about the selected topic.`
 
-Upload one or more supported documents.
+Ask focused questions and verify consequential answers in the original documents.
 
-Supported formats:
+## Configuration Defaults
 
-PDF
-DOCX
-TXT
-CSV
-JSON
+The defaults are defined in [`app/utils/config.py`](app/utils/config.py) and [`app/rag/embeddings.py`](app/rag/embeddings.py):
 
-### Step 3
+| Setting | Default |
+| --- | --- |
+| Embedding model | `gemini-embedding-001` |
+| Chat model | `gemini-3.6-flash` |
+| Chunk size | `500` characters |
+| Chunk overlap | `50` characters |
+| Retrieved chunks (`TOP_K`) | `5` |
+| ChromaDB directory | `chroma_db/` |
+| ChromaDB collection | `rag_documents` |
+| Upload directory | `data/uploads/` |
 
-Click:
+Changing chunking or model settings affects how documents are indexed and queried. If you change embedding models, re-index existing content so stored vectors are compatible with the active embedding model.
 
-Process Documents
+## Data, Persistence, and Privacy
 
-The application will:
+- Uploaded originals are written to `data/uploads/`; vectors and document metadata are stored under `chroma_db/`.
+- The ChromaDB directory is persistent across app restarts. The UI's current document-name list, source list, and chat history use Streamlit session state and are not a durable user/account history.
+- This app uses one local collection and local directories. Anyone with access to the running app and its files may be able to interact with or inspect that data; there is no authentication or per-user separation.
+- Uploaded document content and questions are sent to Gemini for embedding or answer generation. Do not upload sensitive material unless its handling is acceptable under your policies and the provider's terms.
+- Uploaded files are saved using their original filenames. Files with the same name can overwrite one another, so use distinct filenames.
+- Processing the same document repeatedly can add duplicate chunks to the vector collection. The current app does not deduplicate or update a previously indexed file automatically.
+- Deleting a document removes vectors matching its stored source path and deletes the corresponding local upload. Deleting all also clears the ChromaDB records in the app's collection.
 
-Load
-↓
-Split
-↓
-Embed
-↓
-Store in ChromaDB
+The `chroma_db/` and `data/uploads/` directories are ignored by Git and should generally remain local. Back them up separately if you need to preserve indexed data or originals.
 
-### Step 4
+## Troubleshooting
 
-Ask a question in the chat box.
+| Symptom | What to check |
+| --- | --- |
+| `GOOGLE_API_KEY not found` | Confirm `.env` is in the repository root, the variable is spelled exactly `GOOGLE_API_KEY`, and the app is started from the project directory. |
+| Gemini quota, rate limit, or `429` message | Check your Google AI quota and billing/project settings, then retry after the applicable limit resets. |
+| Other Gemini request failures | Check network access, key validity, model availability for your account, and the terminal output for details. |
+| A file fails to load | Confirm it is a valid supported format. TXT files are read as UTF-8; scanned PDFs may not contain extractable text. |
+| Answers do not include expected information | Verify the text was extracted correctly, reprocess the document, and try a more specific question. Retrieval only supplies up to five matching chunks. |
+| Document list is empty after restarting | The list is session state, even though local files and ChromaDB data persist. The current UI does not rebuild the list from the database on startup. |
+| Import or dependency errors | Activate the intended virtual environment and reinstall dependencies with `pip install -r requirements.txt`. |
 
-For example:
+Gemini quota and other API errors during answer generation are converted into user-facing messages by the application. Document loading and embedding errors may still surface during processing.
 
-What is the case number?
+## Current Limitations
 
-### Step 5
+- No authentication, user accounts, tenant isolation, or access controls.
+- Local filesystem and local ChromaDB only; deployment and shared-storage behavior are not configured.
+- No automatic OCR, hybrid search, reranking, retrieval evaluation, or streaming responses.
+- No automatic vector deduplication, document update workflow, or startup reconstruction of the UI's document list.
+- Conversation history is not used to reformulate retrieval queries; each question is searched independently.
+- Dependencies are not pinned to exact versions, and this repository does not include a test suite or deployment configuration.
 
-The application retrieves relevant document chunks and generates an answer using Gemini.
-
-### Step 6
-
-The source documents used for the answer are displayed in the sidebar.
-
-## Error Handling
-
-The application handles Gemini API resource and quota errors.
-
-For example:
-
-429 RESOURCE_EXHAUSTED
-
-This error can occur when the Gemini API resource or quota limit is temporarily reached.
-
-The application handles this condition and displays a user-friendly message instead of exposing a Python traceback.
-
-Depending on the Gemini API usage limits, users may need to wait and try again.
-
-## Security
-
-The Gemini API key must not be stored directly in Python source code.
-
-The following files and directories should not be committed to GitHub:
-
-.env
-
-chroma_db/
-
-data/uploads/
-
-The recommended `.gitignore` entries are:
-
-.env
-
-venv/
-
-.venv/
-
-**pycache**/
-
-*.pyc
-
-chroma_db/
-
-data/uploads/
-
-.ipynb_checkpoints/
-
-.streamlit/secrets.toml
-
-## Architecture
-
-User
-↓
-Streamlit UI
-↓
-Document Upload
-↓
-Document Loaders
-↓
-Document Splitter
-↓
-Gemini Embeddings
-↓
-ChromaDB
-↓
-Similarity Search
-↓
-Relevant Chunks
-↓
-Gemini LLM
-↓
-Answer
-
-## Key Configuration
-
-Embedding Model:
-
-gemini-embedding-001
-
-LLM:
-
-gemini-3.6-flash
-
-Chunk Size:
-
-500
-
-Chunk Overlap:
-
-50
-
-Top K:
-
-5
-
-Vector Database:
-
-ChromaDB
-
-Framework:
-
-LangChain
-
-Frontend:
-
-Streamlit
-
-## Project Goals
-
-This project demonstrates practical implementation of:
-
-* Retrieval-Augmented Generation
-* Document processing
-* Document chunking
-* Text embeddings
-* Vector databases
-* Semantic similarity search
-* Context-based question answering
-* LangChain integration
-* Gemini integration
-* Dynamic document management
-* Streamlit application development
-
-## Future Improvements
-
-Possible future improvements include:
-
-* Retrieval quality evaluation
-* RAG evaluation metrics
-* Hybrid search
-* Reranking
-* Conversation-aware retrieval
-* Authentication
-* User-specific document collections
-* Document metadata filtering
-* Cloud deployment
-* Production monitoring
-* Improved document processing
-* Streaming Gemini responses
-
-## Author
-
-Sanjay Kumar Ippili
-
-B.Tech - Information Technology
-
-Interests:
-
-Machine Learning
-Python
-Generative AI
-RAG
-LangChain
-AI Agents
-Data Science
-
-## License
-
-This project is intended for educational, portfolio, and demonstration purposes.
+These boundaries matter before exposing the app to untrusted users or using it for sensitive or business-critical workloads.
